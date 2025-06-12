@@ -10,13 +10,18 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// ✅ Allow only your frontend domain
-const allowedOrigin = 'https://landok.netlify.app';
+
+const allowedOrigins = ['http://localhost:3000', 'https://landok.netlify.app'];
 
 app.use(cors({
-  origin: allowedOrigin,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true,
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
 }));
 
 // ✅ Routes
