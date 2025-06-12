@@ -12,8 +12,10 @@ app.use(cors());
 app.use(express.json());
 
 // ✅ Fully open CORS (for development and deployment)
-app.use(cors({
-  origin: '*'
+app.options('*', cors({
+  origin: 'https://landok.netlify.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
 }));
 
 // Routes
