@@ -11,10 +11,19 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const allowedOrigin = 'https://landok.netlify.app';
+
 // ✅ Fully open CORS (for development and deployment)
+app.use(cors({
+  origin: allowedOrigin,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+}));
+
+// Handle preflight
 app.options('*', cors({
-  origin: 'https://landok.netlify.app',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: allowedOrigin,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
 }));
 
