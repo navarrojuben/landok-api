@@ -7,14 +7,14 @@ const Image = require('../models/Image'); // MongoDB model
 
 const router = express.Router();
 
-// Cloudinary config
+// ✅ Cloudinary configuration
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Multer + Cloudinary
+// ✅ Set up multer to use Cloudinary storage
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
@@ -25,10 +25,13 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
-// GET /upload - fetch all uploaded images from MongoDB
+/**
+ * @route GET /upload
+ * @desc Get all uploaded images
+ */
 router.get('/', async (req, res) => {
   try {
-    const images = await Image.find().sort({ createdAt: -1 }); // newest first
+    const images = await Image.find().sort({ createdAt: -1 });
     res.json(images);
   } catch (err) {
     console.error('Fetch error:', err);
@@ -36,17 +39,17 @@ router.get('/', async (req, res) => {
   }
 });
 
-
-// POST /upload - Upload image and save to MongoDB
+/**
+ * @route POST /upload
+ * @desc Upload an image to Cloudinary and save to MongoDB
+ */
 router.post('/', upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).send('No file uploaded');
 
-    console.log('Uploaded file:', req.file); // ✅ Debug log
-
     const newImage = new Image({
-      url: req.file.path,               // full Cloudinary URL
-      public_id: req.file.filename,     // includes folder (e.g., "mern_uploads/abc123")
+      url: req.file.path,               // Full Cloudinary URL
+      public_id: req.file.filename,     // Cloudinary public ID (includes folder)
     });
 
     const savedImage = await newImage.save();
@@ -57,22 +60,21 @@ router.post('/', upload.single('photo'), async (req, res) => {
   }
 });
 
-// DELETE /upload/:public_id - Delete from Cloudinary & MongoDB
+/**
+ * @route DELETE /upload/:public_id
+ * @desc Delete image from Cloudinary and MongoDB
+ */
 router.delete('/:public_id', async (req, res) => {
   let { public_id } = req.params;
 
-  // Decode URL-encoded slashes if needed
-  public_id = decodeURIComponent(public_id);
-
   try {
-    // 1. Delete from Cloudinary
+    public_id = decodeURIComponent(public_id); // Handle slashes in ID
     const result = await cloudinary.uploader.destroy(public_id);
 
     if (result.result !== 'ok') {
-      return res.status(400).json({ success: false, message: 'Failed to delete image from Cloudinary' });
+      return res.status(400).json({ success: false, message: 'Failed to delete from Cloudinary' });
     }
 
-    // 2. Delete from MongoDB
     await Image.findOneAndDelete({ public_id });
 
     res.json({ success: true, message: 'Image deleted successfully' });

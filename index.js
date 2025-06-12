@@ -8,36 +8,28 @@ const uploadRoute = require('./routes/upload');
 dotenv.config();
 
 const app = express();
-app.use(cors());
 app.use(express.json());
 
+// ✅ Allow only your frontend domain
 const allowedOrigin = 'https://landok.netlify.app';
 
-// ✅ Fully open CORS (for development and deployment)
 app.use(cors({
   origin: allowedOrigin,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
 
-// Handle preflight
-app.options('*', cors({
-  origin: allowedOrigin,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true,
-}));
-
-// Routes
+// ✅ Routes
 app.use('/upload', uploadRoute);
 
-// MongoDB Connect
+// ✅ MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('MongoDB connected');
 
     console.log('CLOUDINARY SETUP:', {
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
     });
 
     app.listen(process.env.PORT, () =>
