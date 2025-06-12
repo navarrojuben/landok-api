@@ -11,6 +11,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ✅ Fully open CORS (for development and deployment)
+app.use(cors({
+  origin: '*'
+}));
+
 // Routes
 app.use('/upload', uploadRoute);
 
