@@ -6,16 +6,18 @@ const dotenv = require('dotenv');
 dotenv.config();
 const app = express();
 
-
+// ✅ Middleware to parse JSON
+app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Optional, but helps with form submissions
 
 const allowedOrigins = ['https://landok.netlify.app', 'http://localhost:3000'];
 
 app.use((req, res, next) => {
   console.log('🔥 Request Origin:', req.headers.origin);
-  res.header("Access-Control-Allow-Origin", req.headers.origin);
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE");
-  res.header("Access-Control-Allow-Headers", "Content-Type");
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();
 });
 
@@ -30,14 +32,15 @@ app.use(cors({
   credentials: true,
 }));
 
-// ✅ Use project routes
-app.use('/upload',       require('./routes/upload'));
-
-
-
+// ✅ Routes
+app.use('/upload', require('./routes/upload'));
+app.use('/foods',  require('./routes/food'));
 
 // ✅ MongoDB connection
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
   .then(() => console.log('🟢 MongoDB connected'))
   .catch(err => console.error('🔴 MongoDB connection error:', err));
 
