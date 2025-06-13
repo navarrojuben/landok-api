@@ -8,12 +8,19 @@ const app = express();
 
 
 
-// ✅ Fully open CORS (for development and deployment)
-app.use(cors({
-  origin: '*'
-}));
+const allowedOrigins = ['https://landok.netlify.app', 'http://localhost:3000'];
 
-app.use(express.json());
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
+}));
 
 // ✅ Use project routes
 app.use('/upload',       require('./routes/upload'));
