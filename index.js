@@ -33,8 +33,11 @@ app.use(cors({
 }));
 
 // ✅ Routes
-app.use('/upload', require('./routes/upload'));
-app.use('/foods',  require('./routes/food'));
+app.use('/upload',   require('./routes/upload'));
+app.use('/foods',    require('./routes/food'));
+app.use('/admin',    require('./routes/admin'));
+app.use('/categories', require('./routes/category'));
+
 
 // ✅ MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {
