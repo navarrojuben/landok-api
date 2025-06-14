@@ -54,6 +54,20 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// PATCH /foods/:id
+const updateFood = async (req, res) => {
+  try {
+    const food = await Food.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    if (!food) return res.status(404).json({ error: 'Food not found' });
+    res.json(food);
+  } catch (err) {
+    res.status(400).json({ error: 'Failed to update food' });
+  }
+};
+
+
 // DELETE
 router.delete('/:id', async (req, res) => {
   try {
