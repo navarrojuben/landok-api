@@ -9,7 +9,6 @@ router.post('/', async (req, res) => {
 
     const { name, price, category, description, available, image } = req.body;
 
-    // Validation
     if (!name || !price || !category || !description || !image) {
       return res.status(400).json({ message: 'All fields are required.' });
     }
@@ -42,7 +41,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// UPDATE
+// UPDATE (Full)
 router.put('/:id', async (req, res) => {
   try {
     console.log('📤 PUT /foods/:id body:', req.body);
@@ -54,19 +53,17 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// PATCH /foods/:id
-const updateFood = async (req, res) => {
+// PATCH (Partial update - for toggling `hidden`, etc.)
+router.patch('/:id', async (req, res) => {
   try {
-    const food = await Food.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const food = await Food.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!food) return res.status(404).json({ error: 'Food not found' });
     res.json(food);
   } catch (err) {
+    console.error('❌ PATCH error:', err);
     res.status(400).json({ error: 'Failed to update food' });
   }
-};
-
+});
 
 // DELETE
 router.delete('/:id', async (req, res) => {
