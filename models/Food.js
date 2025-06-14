@@ -34,14 +34,20 @@ const foodSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    // 👀 Used to toggle visibility to public
     hidden: {
       type: Boolean,
       default: false, // false = visible to public
     },
+
+    // 🧑 Reference to the User who added this food (future feature)
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
+
+    // 📦 Future: Array of Order references that include this food
     orders: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -50,7 +56,7 @@ const foodSchema = new mongoose.Schema(
     ],
   },
   {
-    timestamps: true,
+    timestamps: true, // adds createdAt and updatedAt fields
   }
 );
 

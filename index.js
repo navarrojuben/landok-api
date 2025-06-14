@@ -6,10 +6,11 @@ const dotenv = require('dotenv');
 dotenv.config();
 const app = express();
 
-// ✅ Middleware to parse JSON
+// ✅ Middleware to parse JSON and URL-encoded form data
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // Optional, but helps with form submissions
+app.use(express.urlencoded({ extended: true }));
 
+// ✅ CORS setup
 const allowedOrigins = ['https://landok.netlify.app', 'http://localhost:3000'];
 
 app.use((req, res, next) => {
@@ -33,17 +34,14 @@ app.use(cors({
 }));
 
 // ✅ Routes
-app.use('/upload',   require('./routes/upload'));
-app.use('/foods',    require('./routes/food'));
-app.use('/admin',    require('./routes/admin'));
+app.use('/upload',     require('./routes/upload'));
+app.use('/foods',      require('./routes/food'));
+app.use('/admin',      require('./routes/admin'));
 app.use('/categories', require('./routes/category'));
 
-
-// ✅ MongoDB connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+// ✅ MongoDB connection (NO deprecated options)
+console.log('🌐 Connecting to MongoDB...');
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('🟢 MongoDB connected'))
   .catch(err => console.error('🔴 MongoDB connection error:', err));
 
