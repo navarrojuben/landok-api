@@ -1,52 +1,78 @@
 const express = require('express');
+const http = require('http');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const { Server } = require('socket.io');
 
 dotenv.config();
 const app = express();
+const server = http.createServer(app);
 
-// ✅ Middleware to parse JSON and URL-encoded form data
+// ✅ Socket.IO setup
+const io = new Server(server, {
+  cors: {
+    origin: ['https://landok.netlify.app', 'http://localhost:3000'],
+    credentials: true,
+    methods: ['GET', 'POST'],
+  },
+});
+
+// ✅ Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ CORS setup
 const allowedOrigins = ['https://landok.netlify.app', 'http://localhost:3000'];
-
-app.use((req, res, next) => {
-  console.log('🔥 Request Origin:', req.headers.origin);
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-  next();
-});
-
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: allowedOrigins,
   credentials: true,
 }));
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
 
 // ✅ Routes
 app.use('/upload',     require('./routes/upload'));
 app.use('/foods',      require('./routes/food'));
 app.use('/admin',      require('./routes/admin'));
 app.use('/categories', require('./routes/category'));
+app.use('/chat',       require('./routes/chatRoutes'));
 
-// ✅ MongoDB connection (NO deprecated options)
+// ✅ Test Route
+app.get('/', (req, res) => {
+  res.send('🚀 Chat server is running!');
+});
+
+// ✅ MongoDB Connection
 console.log('🌐 Connecting to MongoDB...');
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('🟢 MongoDB connected'))
   .catch(err => console.error('🔴 MongoDB connection error:', err));
 
-// ✅ Start server
+// ✅ Socket.IO Events
+io.on('connection', (socket) => {
+  console.log('🟢 Client connected:', socket.id);
+
+  socket.on('send_message', (message) => {
+    console.log('📩 Received message:', message);
+    io.emit('new_message', message); // Broadcast to all clients
+  });
+
+  socket.on('disconnect', () => {
+    console.log('🔌 Client disconnected:', socket.id);
+  });
+});
+
+// ✅ Start Server
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+server.listen(PORT, () => {
+  console.log(`🚀 Server listening on port ${PORT}`);
 });
