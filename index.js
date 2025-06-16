@@ -61,18 +61,27 @@ mongoose.connect(process.env.MONGO_URI)
 io.on('connection', (socket) => {
   console.log('🟢 Client connected:', socket.id);
 
-  // ✅ Match frontend emit('sendMessage')
-  socket.on('sendMessage', (message) => {
-    console.log('📩 Received message:', message);
+  // ✅ Join room based on userId or username
+  socket.on('joinRoom', (userId) => {
+    socket.join(userId); // example: 'user-1718537200000' or 'admin'
+    console.log(`🔐 ${socket.id} joined room: ${userId}`);
+  });
 
-    // ✅ Broadcast to all clients
-    io.emit('receiveMessage', message); // Match frontend socket.on('receiveMessage')
+  // ✅ Listen for messages and emit only to receiver
+  socket.on('sendMessage', (message) => {
+    console.log('📩 Message:', message);
+
+    const { receiver } = message;
+
+    // Send only to the intended receiver's room
+    io.to(receiver).emit('receiveMessage', message);
   });
 
   socket.on('disconnect', () => {
     console.log('🔌 Client disconnected:', socket.id);
   });
 });
+
 
 // ✅ Start Server
 const PORT = process.env.PORT || 4000;

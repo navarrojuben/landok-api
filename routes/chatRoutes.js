@@ -35,15 +35,10 @@ router.get('/inbox/all', async (req, res) => {
 });
 
 // GET /chat/:sender - fetch 2-way conversation and mark as seen
+// GET /chat/:sender - fetch 2-way conversation and mark as seen
 router.get('/:sender', async (req, res) => {
   try {
     const sender = req.params.sender;
-
-    // Mark all user messages as seen
-    await Chat.updateMany(
-      { sender, receiver: 'admin', seen: false },
-      { $set: { seen: true } }
-    );
 
     const messages = await Chat.find({
       $or: [
@@ -52,11 +47,17 @@ router.get('/:sender', async (req, res) => {
       ]
     }).sort({ createdAt: 1 });
 
+    await Chat.updateMany(
+      { sender, receiver: 'admin', seen: false },
+      { $set: { seen: true } }
+    );
+
     res.status(200).json(messages);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch user messages' });
   }
 });
+
 
 // POST /chat - save a new message
 router.post('/', async (req, res) => {
