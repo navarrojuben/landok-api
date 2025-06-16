@@ -57,13 +57,16 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('🟢 MongoDB connected'))
   .catch(err => console.error('🔴 MongoDB connection error:', err));
 
-// ✅ Socket.IO Events
+// ✅ Corrected Socket.IO Events
 io.on('connection', (socket) => {
   console.log('🟢 Client connected:', socket.id);
 
-  socket.on('send_message', (message) => {
+  // ✅ Match frontend emit('sendMessage')
+  socket.on('sendMessage', (message) => {
     console.log('📩 Received message:', message);
-    io.emit('new_message', message); // Broadcast to all clients
+
+    // ✅ Broadcast to all clients
+    io.emit('receiveMessage', message); // Match frontend socket.on('receiveMessage')
   });
 
   socket.on('disconnect', () => {
