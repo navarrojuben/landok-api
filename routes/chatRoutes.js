@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Chat = require('../models/chatModel');
 
-// GET /chat - fetch all messages (for debugging)
+// Fetch all messages (for debugging)
 router.get('/', async (req, res) => {
   try {
     const messages = await Chat.find().sort({ createdAt: 1 });
@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ✅ MODIFIED: GET /chat/inbox/all - fetch latest message per user (admin inbox)
+// ✅ Modified: Fetch latest message per user with unreadCount
 router.get('/inbox/all', async (req, res) => {
   try {
     const threads = await Chat.aggregate([
@@ -40,14 +40,29 @@ router.get('/inbox/all', async (req, res) => {
       { $sort: { 'lastMessage.createdAt': -1 } }
     ]);
 
-    res.status(200).json(threads);
+    const withUnreadCounts = await Promise.all(
+      threads.map(async (thread) => {
+        const unreadCount = await Chat.countDocuments({
+          sender: thread._id,
+          receiver: 'admin',
+          seen: false
+        });
+
+        return {
+          ...thread,
+          unreadCount
+        };
+      })
+    );
+
+    res.status(200).json(withUnreadCounts);
   } catch (err) {
     console.error('Failed to fetch inbox:', err);
     res.status(500).json({ error: 'Inbox fetch failed' });
   }
 });
 
-// GET /chat/:sender - fetch 2-way conversation and mark as seen
+// Fetch 2-way conversation and mark as seen
 router.get('/:sender', async (req, res) => {
   try {
     const sender = req.params.sender;
@@ -70,7 +85,7 @@ router.get('/:sender', async (req, res) => {
   }
 });
 
-// POST /chat - save a new message
+// Save a new message
 router.post('/', async (req, res) => {
   try {
     const { sender, content, timestamp, receiver = 'admin' } = req.body;
@@ -78,8 +93,6 @@ router.post('/', async (req, res) => {
     if (!sender || !content || !timestamp) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-
-    console.log(`📨 New message from "${sender}" to "${receiver}": ${content}`);
 
     const newMessage = new Chat({
       sender,
@@ -96,7 +109,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PATCH /chat/seen/:sender - mark all messages from sender as seen
+// Mark messages from sender as seen
 router.patch('/seen/:sender', async (req, res) => {
   try {
     const sender = req.params.sender;
@@ -112,7 +125,7 @@ router.patch('/seen/:sender', async (req, res) => {
   }
 });
 
-// DELETE /chat/:id - delete a message by ID
+// Delete a message by ID
 router.delete('/:id', async (req, res) => {
   try {
     const deleted = await Chat.findByIdAndDelete(req.params.id);
@@ -125,7 +138,7 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// DELETE /chat/thread/:sender - delete all messages from and to a specific sender
+// Delete all messages from/to a sender
 router.delete('/thread/:sender', async (req, res) => {
   try {
     const sender = req.params.sender;
