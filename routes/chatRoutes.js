@@ -12,15 +12,28 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /chat/inbox/all - fetch latest message per sender (admin inbox)
+// ✅ MODIFIED: GET /chat/inbox/all - fetch latest message per user (admin inbox)
 router.get('/inbox/all', async (req, res) => {
   try {
     const threads = await Chat.aggregate([
-      { $match: { receiver: 'admin' } },
+      {
+        $match: {
+          $or: [
+            { sender: 'admin' },
+            { receiver: 'admin' }
+          ]
+        }
+      },
       { $sort: { createdAt: -1 } },
       {
         $group: {
-          _id: "$sender",
+          _id: {
+            $cond: [
+              { $eq: ["$sender", "admin"] },
+              "$receiver",
+              "$sender"
+            ]
+          },
           lastMessage: { $first: "$$ROOT" }
         }
       },
@@ -34,7 +47,6 @@ router.get('/inbox/all', async (req, res) => {
   }
 });
 
-// GET /chat/:sender - fetch 2-way conversation and mark as seen
 // GET /chat/:sender - fetch 2-way conversation and mark as seen
 router.get('/:sender', async (req, res) => {
   try {
@@ -58,7 +70,6 @@ router.get('/:sender', async (req, res) => {
   }
 });
 
-
 // POST /chat - save a new message
 router.post('/', async (req, res) => {
   try {
@@ -75,7 +86,7 @@ router.post('/', async (req, res) => {
       receiver,
       content,
       timestamp,
-      seen: receiver === 'admin' ? false : true // admin messages are instantly seen
+      seen: receiver === 'admin' ? false : true
     });
 
     await newMessage.save();
