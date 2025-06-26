@@ -53,7 +53,7 @@ router.post('/', async (req, res) => {
     const recent = timestamps.filter(ts => now - ts < WINDOW_MS);
     if (recent.length >= ORDER_LIMIT) {
       return res.status(429).json({
-        error: 'Too many orders from this IP. Please try again later.',
+        error: 'Too many requests. Please try again later.',
       });
     }
 
