@@ -15,17 +15,20 @@ const initSocket = (server) => {
   io.on('connection', (socket) => {
     console.log('🟢 Client connected:', socket.id);
 
+    // ✅ Chat room join
     socket.on('joinRoom', (userId) => {
       socket.join(userId);
       console.log(`🔐 ${socket.id} joined room: ${userId}`);
     });
 
+    // ✅ Chat message
     socket.on('sendMessage', (message) => {
       const { receiver } = message;
       io.to(receiver).emit('receiveMessage', message);
       console.log(`📨 Sent message to ${receiver}`);
     });
 
+    // ✅ Seen message by admin
     socket.on('seenByAdmin', ({ user }) => {
       io.to(user).emit('seenByAdmin', { user });
       console.log(`👀 Sent seenByAdmin to ${user}`);

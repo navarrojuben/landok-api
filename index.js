@@ -3,20 +3,14 @@ const http = require('http');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { Server } = require('socket.io');
+const { initSocket } = require('./socket'); // ✅ import socket init
 
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// ✅ Socket.IO setup
-const io = new Server(server, {
-  cors: {
-    origin: ['https://landok.netlify.app', 'http://localhost:3000'],
-    credentials: true,
-    methods: ['GET', 'POST'],
-  },
-});
+// ✅ Initialize Socket.IO
+initSocket(server); // ⬅️ sets up io and stores globally for reuse
 
 // ✅ Middleware
 app.use(express.json());
@@ -45,6 +39,7 @@ app.use('/foods',      require('./routes/food'));
 app.use('/admin',      require('./routes/admin'));
 app.use('/categories', require('./routes/category'));
 app.use('/chat',       require('./routes/chatRoutes'));
+app.use('/orders',     require('./routes/orderRoutes')); // ✅ orders use getIO inside
 
 // ✅ Test Route
 app.get('/', (req, res) => {
@@ -56,32 +51,6 @@ console.log('🌐 Connecting to MongoDB...');
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('🟢 MongoDB connected'))
   .catch(err => console.error('🔴 MongoDB connection error:', err));
-
-// ✅ Corrected Socket.IO Events
-io.on('connection', (socket) => {
-  console.log('🟢 Client connected:', socket.id);
-
-  // ✅ Join room based on userId or username
-  socket.on('joinRoom', (userId) => {
-    socket.join(userId); // example: 'user-1718537200000' or 'admin'
-    console.log(`🔐 ${socket.id} joined room: ${userId}`);
-  });
-
-  // ✅ Listen for messages and emit only to receiver
-  socket.on('sendMessage', (message) => {
-    console.log('📩 Message:', message);
-
-    const { receiver } = message;
-
-    // Send only to the intended receiver's room
-    io.to(receiver).emit('receiveMessage', message);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('🔌 Client disconnected:', socket.id);
-  });
-});
-
 
 // ✅ Start Server
 const PORT = process.env.PORT || 4000;

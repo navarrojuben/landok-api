@@ -25,17 +25,20 @@ const foodSchema = new mongoose.Schema(
         message: 'Invalid image URL format.',
       },
     },
-
-    // ✅ Add this field
     public_id: {
       type: String,
       required: true,
     },
-
     category: {
       type: String,
       required: true,
       trim: true,
+    },
+    stock: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
     },
     available: {
       type: Boolean,

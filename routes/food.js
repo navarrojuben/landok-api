@@ -14,10 +14,10 @@ cloudinary.config({
 // ✅ CREATE FOOD
 router.post('/', async (req, res) => {
   try {
-    const { name, price, category, description, available, image, public_id } = req.body;
+    const { name, price, category, description, available, image, public_id, stock } = req.body;
 
-    if (!name || !price || !category || !description || !image || !public_id) {
-      return res.status(400).json({ message: 'All fields including image and public_id are required.' });
+    if (!name || !price || !category || !description || !image || !public_id || stock === undefined) {
+      return res.status(400).json({ message: 'All fields including stock, image, and public_id are required.' });
     }
 
     const newFood = new Food({
@@ -28,6 +28,7 @@ router.post('/', async (req, res) => {
       available: available ?? true,
       image,
       public_id,
+      stock,
     });
 
     await newFood.save();
@@ -63,7 +64,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// ✅ PATCH FOOD (e.g. toggle hidden or available)
+// ✅ PATCH FOOD (e.g. toggle hidden, available, or stock)
 router.patch('/:id', async (req, res) => {
   try {
     const foodId = req.params.id;
@@ -104,6 +105,17 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// PUT /foods/:id/decrement-stock
+router.put('/:id/decrement-stock', async (req, res) => {
+  const { id } = req.params;
+  const { quantity } = req.body;
+  const food = await Food.findById(id);
+  if (!food) return res.status(404).send('Food not found');
+
+  food.stock = Math.max(food.stock - quantity, 0);
+  await food.save();
+  res.json({ stock: food.stock });
+});
 
 
 module.exports = router;
